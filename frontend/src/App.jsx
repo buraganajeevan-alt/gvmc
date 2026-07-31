@@ -77,11 +77,85 @@ export default function App() {
     name: '',
     emp_id: '',
     email: '',
+    phone: '',
     password: 'officer123',
     designation: 'FSSAI Inspector',
-    assigned_wards: 'Ward 1',
-    phone: '+91 98480 '
+    assigned_wards: 'Ward 1'
   })
+
+  // Inspector Phone + Name OTP Authentication State
+  const [inspectorNameInput, setInspectorNameInput] = useState('')
+  const [inspectorPhoneInput, setInspectorPhoneInput] = useState('')
+  const [otpInput, setOtpInput] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [demoOtp, setDemoOtp] = useState('')
+  const [requestingOtp, setRequestingOtp] = useState(false)
+  const [verifyingOtp, setVerifyingOtp] = useState(false)
+
+  // Request OTP for Inspector Login (Matches Admin created Name & Phone)
+  async function handleRequestInspectorOtp(e, overrideName = null, overridePhone = null) {
+    if (e) e.preventDefault()
+    const name = overrideName || inspectorNameInput
+    const phone = overridePhone || inspectorPhoneInput
+    if (!name || !phone) {
+      setLoginError('Please enter both Inspector Full Name and Mobile Phone Number.')
+      return
+    }
+    setLoginError('')
+    setRequestingOtp(true)
+    try {
+      const res = await fetch(`${API}/api/auth/inspector/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'OTP request failed')
+
+      setOtpSent(true)
+      setDemoOtp(data.otp)
+      setInspectorNameInput(data.inspectorName || name)
+      setInspectorPhoneInput(data.phone || phone)
+      addToast(`📲 OTP Sent to +91 ${data.phone}! (Demo Code: ${data.otp})`, 'info')
+    } catch (err) {
+      setLoginError(err.message)
+    } finally {
+      setRequestingOtp(false)
+    }
+  }
+
+  // Verify OTP for Inspector Login
+  async function handleVerifyInspectorOtp(e, overrideOtp = null) {
+    if (e) e.preventDefault()
+    const otp = overrideOtp || otpInput
+    if (!otp) {
+      setLoginError('Please enter the 4-digit OTP.')
+      return
+    }
+    setLoginError('')
+    setVerifyingOtp(true)
+    try {
+      const res = await fetch(`${API}/api/auth/inspector/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: inspectorPhoneInput, otp })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'OTP verification failed')
+
+      setUser(data.user)
+      localStorage.setItem('gvmc_user', JSON.stringify(data.user))
+      setLoginError('')
+      setOtpSent(false)
+      setOtpInput('')
+      addToast(`Welcome back, Inspector ${data.user.name}!`, 'success')
+    } catch (err) {
+      setLoginError(err.message)
+    } finally {
+      setVerifyingOtp(false)
+    }
+  }
+
 
   // 3. Admin Add Establishment Form
   const [businessForm, setBusinessForm] = useState({
@@ -741,41 +815,117 @@ export default function App() {
             </p>
           </div>
 
-          {loginError && <div className="alert error" style={{ fontSize: '13px', marginBottom: '16px' }}>⚠️ {loginError}</div>}
+          {loginError && <div className="alert error" style={{ fontSize: '13px', marginBottom: '16px', background: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(220, 38, 38, 0.3)' }}>⚠️ {loginError}</div>}
 
-          <form onSubmit={e => handleLogin(e)}>
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                required
-                className="form-control"
-                placeholder="email@gvmc.gov.in"
-                value={loginEmail}
-                onChange={e => setLoginEmail(e.target.value)}
-              />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                required
-                className="form-control"
-                placeholder="••••••••"
-                value={loginPassword}
-                onChange={e => setLoginPassword(e.target.value)}
-              />
-            </div>
+          {/* INSPECTOR LOGIN FORM (NAME + PHONE NUMBER + OTP) */}
+          {selectedRoleType === 'INSPECTOR' ? (
+            !otpSent ? (
+              <form onSubmit={handleRequestInspectorOtp}>
+                <div className="form-group">
+                  <label className="form-label">Inspector Full Name (As Registered by Admin) *</label>
+                  <input
+                    type="text"
+                    required
+                    className="form-control"
+                    placeholder="e.g. Ravi Kumar"
+                    value={inspectorNameInput}
+                    onChange={e => setInspectorNameInput(e.target.value)}
+                  />
+                </div>
 
-            <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={loggingIn}>
-              {loggingIn ? 'Authenticating...' : `Sign In to ${selectedRoleType} Workspace`}
-            </button>
-          </form>
+                <div className="form-group">
+                  <label className="form-label">Mobile Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    className="form-control"
+                    placeholder="e.g. 9849012345"
+                    value={inspectorPhoneInput}
+                    onChange={e => setInspectorPhoneInput(e.target.value)}
+                  />
+                </div>
+
+                <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={requestingOtp}>
+                  {requestingOtp ? 'Verifying Details...' : '📲 Request OTP →'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyInspectorOtp}>
+                <div style={{ background: 'rgba(37, 99, 235, 0.08)', border: '1px solid rgba(37, 99, 235, 0.25)', padding: '12px', borderRadius: '12px', marginBottom: '16px', fontSize: '12px' }}>
+                  <div style={{ fontWeight: '700', color: 'var(--accent-blue)', marginBottom: '4px' }}>
+                    📲 OTP Sent to +91 {inspectorPhoneInput}
+                  </div>
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    Inspector Name: <strong>{inspectorNameInput}</strong>
+                  </div>
+                  <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '8px', marginTop: '8px', border: '1px solid #cbd5e1', fontWeight: '800', color: '#059669', fontSize: '13px' }}>
+                    ⚡ Demo Mode OTP: {demoOtp}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Enter 4-Digit OTP Code *</label>
+                  <input
+                    type="text"
+                    maxLength="4"
+                    required
+                    className="form-control"
+                    placeholder="e.g. 4289"
+                    style={{ textAlign: 'center', letterSpacing: '6px', fontSize: '20px', fontWeight: '800' }}
+                    value={otpInput}
+                    onChange={e => setOtpInput(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setOtpSent(false)}>
+                    ← Back
+                  </button>
+                  <button type="submit" className="btn primary" style={{ flex: 2, justifyContent: 'center', padding: '12px' }} disabled={verifyingOtp}>
+                    {verifyingOtp ? 'Verifying OTP...' : '🔐 Verify & Login →'}
+                  </button>
+                </div>
+              </form>
+            )
+          ) : (
+            /* ADMIN / COMMISSIONER LOGIN FORM (EMAIL + PASSWORD) */
+            <form onSubmit={e => handleLogin(e)}>
+              <div className="form-group">
+                <label className="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  className="form-control"
+                  placeholder="email@gvmc.gov.in"
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Password *</label>
+                <input
+                  type="password"
+                  required
+                  className="form-control"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={loggingIn}>
+                {loggingIn ? 'Authenticating...' : `Sign In to ${selectedRoleType} Workspace`}
+              </button>
+            </form>
+          )}
 
           {/* Quick Demo Credentials Pill */}
-          <div style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-dark)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>⚡ Demo Account Credentials:</div>
+          <div style={{ marginTop: '20px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+              ⚡ 1-Click Quick Demo Access:
+            </div>
             {selectedRoleType === 'ADMIN' && (
               <button
                 className="demo-btn"
@@ -792,38 +942,37 @@ export default function App() {
                 <button
                   className="demo-btn"
                   style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleLogin(null, { email: 'rkumar@gvmc.gov.in', password: 'officer123' })}
+                  onClick={() => handleRequestInspectorOtp(null, 'Ravi Kumar', '9849012345')}
                 >
-                  <span>👮 1. Inspector Ravi Kumar (Wards 1 &amp; 2)</span>
-                  <span className="mono-tag">GVMC-088</span>
+                  <span>👮 1. Ravi Kumar (9849012345)</span>
+                  <span className="mono-tag">Wards 1 &amp; 2</span>
                 </button>
                 <button
                   className="demo-btn"
                   style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleLogin(null, { email: 'srao@gvmc.gov.in', password: 'officer123' })}
+                  onClick={() => handleRequestInspectorOtp(null, 'Suresh Rao', '9849012346')}
                 >
-                  <span>👮 2. Inspector Suresh Rao (Wards 1 &amp; 3)</span>
-                  <span className="mono-tag">GVMC-104</span>
+                  <span>👮 2. Suresh Rao (9849012346)</span>
+                  <span className="mono-tag">Wards 1 &amp; 3</span>
                 </button>
                 <button
                   className="demo-btn"
                   style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleLogin(null, { email: 'knaidu@gvmc.gov.in', password: 'officer123' })}
+                  onClick={() => handleRequestInspectorOtp(null, 'K. Naidu', '9849012347')}
                 >
-                  <span>👮 3. Inspector K. Naidu (Wards 2 &amp; 5)</span>
-                  <span className="mono-tag">GVMC-112</span>
+                  <span>👮 3. K. Naidu (9849012347)</span>
+                  <span className="mono-tag">Wards 2 &amp; 5</span>
                 </button>
                 <button
                   className="demo-btn"
                   style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleLogin(null, { email: 'aroy@gvmc.gov.in', password: 'officer123' })}
+                  onClick={() => handleRequestInspectorOtp(null, 'Anitha Roy', '9849012348')}
                 >
-                  <span>👮 4. Inspector Anitha Roy (Wards 4 &amp; 5)</span>
-                  <span className="mono-tag">GVMC-118</span>
+                  <span>👮 4. Anitha Roy (9849012348)</span>
+                  <span className="mono-tag">Wards 4 &amp; 5</span>
                 </button>
               </div>
             )}
-
 
             {selectedRoleType === 'COMMISSIONER' && (
               <button
@@ -837,6 +986,8 @@ export default function App() {
             )}
           </div>
         </div>
+
+
 
         <div className="toast-container">
           {toasts.map(t => (
@@ -1778,19 +1929,23 @@ export default function App() {
 
             <form onSubmit={handleAddOfficerSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
               <div>
-                <label className="form-label">Full Inspector Name *</label>
+                <label className="form-label">Full Inspector Name * (Used for OTP Login)</label>
                 <input type="text" required placeholder="e.g. M. Verma" className="search-input" style={{ width: '100%' }} value={officerForm.name} onChange={e => setOfficerForm({ ...officerForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="form-label">Mobile Phone Number * (Used for OTP Login)</label>
+                <input type="tel" required placeholder="e.g. 9849012349" className="search-input" style={{ width: '100%' }} value={officerForm.phone} onChange={e => setOfficerForm({ ...officerForm, phone: e.target.value })} />
               </div>
               <div>
                 <label className="form-label">Employee Badge ID</label>
                 <input type="text" placeholder="e.g. GVMC-FSSAI-120" className="search-input" style={{ width: '100%' }} value={officerForm.emp_id} onChange={e => setOfficerForm({ ...officerForm, emp_id: e.target.value })} />
               </div>
               <div>
-                <label className="form-label">Official Email *</label>
-                <input type="email" required placeholder="mverma@gvmc.gov.in" className="search-input" style={{ width: '100%' }} value={officerForm.email} onChange={e => setOfficerForm({ ...officerForm, email: e.target.value })} />
+                <label className="form-label">Official Email</label>
+                <input type="email" placeholder="mverma@gvmc.gov.in" className="search-input" style={{ width: '100%' }} value={officerForm.email} onChange={e => setOfficerForm({ ...officerForm, email: e.target.value })} />
               </div>
-              <div>
-                <label className="form-label">Assigned Ward</label>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Assigned Municipal Ward</label>
                 <select className="select-filter" style={{ width: '100%' }} value={officerForm.assigned_wards} onChange={e => setOfficerForm({ ...officerForm, assigned_wards: e.target.value })}>
                   <option value="Ward 1">Ward 1 (Siripuram)</option>
                   <option value="Ward 2">Ward 2 (Dwaraka Nagar)</option>
@@ -1799,6 +1954,7 @@ export default function App() {
                   <option value="Ward 5">Ward 5 (Jagadamba)</option>
                 </select>
               </div>
+
               <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button type="button" className="btn secondary" onClick={() => setShowAddOfficerModal(false)}>Cancel</button>
                 <button type="submit" className="btn primary" disabled={saving}>Save Inspector</button>

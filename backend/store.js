@@ -81,6 +81,79 @@ function authenticateUser(email, password) {
   return userWithoutPassword;
 }
 
+// --- IN-MEMORY OTP STORE FOR INSPECTOR MOBILE LOGIN ---
+const otpStore = new Map();
+
+function cleanPhone(p) {
+  return String(p || '').replace(/\D/g, '').slice(-10);
+}
+
+function cleanName(n) {
+  return String(n || '').trim().toLowerCase();
+}
+
+function requestInspectorOtp(name, phone) {
+  const officers = readOfficers();
+  const targetPhone = cleanPhone(phone);
+  const targetName = cleanName(name);
+
+  if (!targetPhone || !targetName) {
+    return { success: false, message: 'Please provide both Inspector Name and Mobile Phone Number.' };
+  }
+
+  // Match by Name and Phone Number
+  const officer = officers.find(o => {
+    const oName = cleanName(o.name);
+    const oPhone = cleanPhone(o.phone);
+    return (oName === targetName || oName.includes(targetName) || targetName.includes(oName)) && oPhone === targetPhone;
+  });
+
+  if (!officer) {
+    return {
+      success: false,
+      message: `No registered Field Inspector found matching Name "${name}" and Phone Number "${phone}". Please check details or contact Admin.`
+    };
+  }
+
+  // Demo OTP: '4289'
+  const otp = '4289';
+  otpStore.set(targetPhone, {
+    otp,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+    officer
+  });
+
+  return {
+    success: true,
+    otp,
+    phone: targetPhone,
+    inspectorName: officer.name,
+    message: `OTP sent successfully to +91 ${targetPhone}`
+  };
+}
+
+function verifyInspectorOtp(phone, otpInput) {
+  const targetPhone = cleanPhone(phone);
+  const record = otpStore.get(targetPhone);
+
+  if (!record) {
+    return { success: false, message: 'OTP session expired or not found. Please request a new OTP.' };
+  }
+
+  if (Date.now() > record.expiresAt) {
+    otpStore.delete(targetPhone);
+    return { success: false, message: 'OTP has expired. Please request a new OTP.' };
+  }
+
+  if (String(otpInput).trim() !== record.otp) {
+    return { success: false, message: 'Invalid OTP entered. Please enter the 4-digit code (Demo Code: 4289).' };
+  }
+
+  otpStore.delete(targetPhone);
+  const { password: _, ...userWithoutPassword } = record.officer;
+  return { success: true, user: userWithoutPassword };
+}
+
 // --- ADMIN: CREATE NEW INSPECTOR ---
 function createOfficer(officerData) {
   const officers = readOfficers();
@@ -89,20 +162,21 @@ function createOfficer(officerData) {
     id: newId,
     name: officerData.name,
     emp_id: officerData.emp_id || `GVMC-FSSAI-${String(newId).padStart(3, '0')}`,
-    email: officerData.email,
+    email: officerData.email || `${officerData.name.toLowerCase().replace(/\s+/g, '')}@gvmc.gov.in`,
     password: officerData.password || 'officer123',
     role: officerData.role || 'INSPECTOR',
     designation: officerData.designation || 'FSSAI Inspector',
     assigned_wards: Array.isArray(officerData.assigned_wards)
       ? officerData.assigned_wards
       : [officerData.assigned_wards || 'Ward 1'],
-    phone: officerData.phone || '+91 98480 00000',
+    phone: officerData.phone || '9849012345',
     created_at: new Date().toISOString()
   };
   officers.push(newOfficer);
   writeOfficers(officers);
   return newOfficer;
 }
+
 
 // --- ADMIN: CREATE NEW ESTABLISHMENT ---
 function createBusiness(businessData) {
@@ -546,7 +620,10 @@ module.exports = {
   readViolations,
   writeViolations,
   authenticateUser,
+  requestInspectorOtp,
+  verifyInspectorOtp,
   createOfficer,
+
   createBusiness,
   assignInspection,
   recordViolation,

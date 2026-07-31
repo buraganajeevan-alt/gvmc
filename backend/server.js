@@ -25,6 +25,34 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// --- INSPECTOR OTP AUTHENTICATION ---
+app.post('/api/auth/inspector/request-otp', (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const result = store.requestInspectorOtp(name, phone);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/inspector/verify-otp', (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    const result = store.verifyInspectorOtp(phone, otp);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json({ message: 'Inspector OTP verified successfully', user: result.user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // --- OFFICERS DIRECTORY & PERFORMANCE SCORECARD ---
 app.get('/api/officers', (req, res) => {
   try {
