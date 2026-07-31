@@ -37,6 +37,8 @@ export default function App() {
   const [error, setError] = useState(null)
   const [toasts, setToasts] = useState([])
 
+
+
   // Filters & Search
   const [search, setSearch] = useState('')
   const [ward, setWard] = useState('')
@@ -252,7 +254,6 @@ export default function App() {
     addToast('You have been logged out.', 'info')
   }
 
-
   async function loadAllData() {
     setLoading(true)
     setError(null)
@@ -267,12 +268,13 @@ export default function App() {
       setBusinesses(b.businesses || [])
       setOverdue(o.overdue_inspections || [])
       setOfficers(off.officers || [])
-    } catch (e) {
-      setError(e.message)
+    } catch (err) {
+      setError(err.message)
     } finally {
       setLoading(false)
     }
   }
+
 
   const handleDateOrRiskChange = (field, val) => {
     const updatedForm = { ...form, [field]: val }
@@ -394,6 +396,10 @@ export default function App() {
     setShowLocationModal(true)
     getLiveInspectorLocation()
   }
+
+
+
+
 
 
   // Inspector History Filter State
@@ -595,6 +601,15 @@ export default function App() {
   // 3. Admin: Add Establishment
   async function handleAddBusinessSubmit(e) {
     e.preventDefault()
+
+    // Client-side pre-check for tampered / duplicate license number
+    const cleanInputLicense = String(businessForm.license_number || '').trim().toUpperCase()
+    const duplicate = businesses.find(b => String(b.license_number || '').trim().toUpperCase() === cleanInputLicense)
+    if (duplicate) {
+      addToast(`🚨 Tampered FSSAI License Number Error! License "${cleanInputLicense}" is already registered for "${duplicate.business_name}" in the database.`, 'error')
+      return
+    }
+
     setSaving(true)
     try {
       const res = await fetch(`${API}/api/businesses`, {
@@ -602,7 +617,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(businessForm)
       })
-      if (!res.ok) throw new Error('Failed to add establishment')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to add establishment')
 
       addToast(`Establishment ${businessForm.business_name} added!`, 'success')
       setShowAddBusinessModal(false)
@@ -614,6 +630,7 @@ export default function App() {
       setSaving(false)
     }
   }
+
 
   // 4. Admin: Assign Inspection
   async function handleAssignSubmit(e) {
@@ -702,6 +719,8 @@ export default function App() {
 
   // --- STAGE: SINGLE UNIFIED LOGIN PAGE WITH AUTOMATIC ROLE-BASED ACCESS ---
   if (!user) {
+
+
     return (
       <div className="login-overlay">
         <div className="login-card" style={{ maxWidth: '480px' }}>
@@ -1113,7 +1132,6 @@ export default function App() {
                         <button className="btn secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '12px', borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)' }} onClick={() => handleOpenLocationModal(item)}>
                           🗺️ Live GPS Route
                         </button>
-
                         <button className="btn secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }} onClick={() => openHistoryDrawer(item)}>
                           🔍 Details
                         </button>
@@ -1121,6 +1139,8 @@ export default function App() {
                           ⚡ {item.status === 'In Progress' ? 'Continue' : 'Start Audit'}
                         </button>
                       </div>
+
+
 
                     </div>
                   ))}
@@ -1482,7 +1502,6 @@ export default function App() {
                         </td>
                       </tr>
                     )}
-
                   </tbody>
                 </table>
               </div>
@@ -1491,7 +1510,33 @@ export default function App() {
         </div>
       ) : (
         /* ADMIN / COMMISSIONER DASHBOARD VIEWS */
-        <>
+        <div>
+          {/* Admin Navigation Bar */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--bg-card)', padding: '10px 16px', borderRadius: '12px', border: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+            <button
+              className={`btn ${roleView === 'dashboard' ? 'primary' : 'secondary'}`}
+              style={{ fontSize: '13px', padding: '8px 16px' }}
+              onClick={() => setRoleView('dashboard')}
+            >
+              📋 Establishments Register ({businesses.length})
+            </button>
+            <button
+              className={`btn ${roleView === 'high_risk_radar' ? 'primary' : 'secondary'}`}
+              style={{ fontSize: '13px', padding: '8px 16px' }}
+              onClick={() => setRoleView('high_risk_radar')}
+            >
+              🚨 High Risk Radar
+            </button>
+            <button
+              className={`btn ${roleView === 'inspectors_scorecard' ? 'primary' : 'secondary'}`}
+              style={{ fontSize: '13px', padding: '8px 16px' }}
+              onClick={() => setRoleView('inspectors_scorecard')}
+            >
+              👮 Inspector Performance
+            </button>
+          </div>
+
+
           {/* VIEW: HIGH RISK RADAR (MANAGER / COMMISSIONER FOCUS) */}
           {roleView === 'high_risk_radar' && (
             <div className="dashboard-content full-width">
@@ -1777,8 +1822,12 @@ export default function App() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
+
+
+
+
 
 
       {/* --- ADMIN MODAL 1: ADD INSPECTOR --- */}
@@ -1842,10 +1891,17 @@ export default function App() {
             </div>
 
             <form onSubmit={handleAddBusinessSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
+              {businessForm.license_number && businesses.some(b => String(b.license_number || '').trim().toUpperCase() === businessForm.license_number.trim().toUpperCase()) && (
+                <div style={{ gridColumn: 'span 2', background: '#fee2e2', border: '1.5px solid #dc2626', color: '#b91c1c', padding: '12px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: '700' }}>
+                  🚨 Tampered FSSAI License Number Error! License "{businessForm.license_number.trim().toUpperCase()}" is already registered for "{businesses.find(b => String(b.license_number || '').trim().toUpperCase() === businessForm.license_number.trim().toUpperCase())?.business_name}" in the database.
+                </div>
+              )}
+
               <div>
                 <label className="form-label">Business / Hotel Name *</label>
                 <input type="text" required placeholder="e.g. Vizag Bakers Hub" className="search-input" style={{ width: '100%' }} value={businessForm.business_name} onChange={e => setBusinessForm({ ...businessForm, business_name: e.target.value })} />
               </div>
+
               <div>
                 <label className="form-label">FSSAI License No *</label>
                 <input type="text" required placeholder="e.g. AP-FSSAI-2024-9001" className="search-input" style={{ width: '100%' }} value={businessForm.license_number} onChange={e => setBusinessForm({ ...businessForm, license_number: e.target.value })} />
@@ -2189,7 +2245,11 @@ export default function App() {
       )}
 
 
+
+
+
       {/* Toast Notifications */}
+
       <div className="toast-container">
 
         {toasts.map(t => (

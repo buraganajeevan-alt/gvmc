@@ -87,9 +87,11 @@ app.post('/api/businesses', (req, res) => {
     const business = store.createBusiness(req.body);
     res.status(201).json({ message: 'Establishment registered successfully', business });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const status = err.statusCode || 400;
+    res.status(status).json({ error: err.message });
   }
 });
+
 
 // --- ADMIN: ASSIGN INSPECTION ---
 app.post('/api/inspections/assign', (req, res) => {
@@ -157,7 +159,31 @@ app.post('/api/inspections/:id/submit', (req, res) => {
   }
 });
 
+// --- PUBLIC CUSTOMER FEEDBACK ROUTE ---
+app.post('/api/feedbacks', (req, res) => {
+  try {
+    const { license_number, business_name, rating, customer_name, customer_phone, comments } = req.body;
+    if (!license_number || !business_name) {
+      return res.status(400).json({ error: 'License number and business name are required.' });
+    }
+    const record = store.createFeedback({ license_number, business_name, rating, customer_name, customer_phone, comments });
+    res.status(201).json({ message: 'Feedback submitted successfully', feedback: record });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/feedbacks', (req, res) => {
+  try {
+    const feedbacks = store.getFeedbacks();
+    res.json({ feedbacks });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all inspections, optionally filtered by ward, risk_category, and/or overdue status
+
 
 app.get('/api/inspections', (req, res) => {
   try {

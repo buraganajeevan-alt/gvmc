@@ -6,6 +6,7 @@ require('dotenv').config();
 const dbPath = path.join(__dirname, 'inspections.json');
 const officersPath = path.join(__dirname, 'officers.json');
 const violationsPath = path.join(__dirname, 'violations.json');
+const feedbacksPath = path.join(__dirname, 'feedbacks.json');
 
 // --- SUPABASE CLOUD DATABASE CLIENT ---
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://befxkspkbyzftxmehfyj.supabase.co';
@@ -25,7 +26,11 @@ function initDB() {
   if (!fs.existsSync(violationsPath)) {
     fs.writeFileSync(violationsPath, JSON.stringify([], null, 2));
   }
+  if (!fs.existsSync(feedbacksPath)) {
+    fs.writeFileSync(feedbacksPath, JSON.stringify([], null, 2));
+  }
 }
+
 
 
 // Read inspection events
@@ -63,6 +68,58 @@ function readViolations() {
 function writeViolations(data) {
   fs.writeFileSync(violationsPath, JSON.stringify(data, null, 2));
 }
+
+// Read feedbacks
+function readFeedbacks() {
+  if (!fs.existsSync(feedbacksPath)) return [];
+  const data = fs.readFileSync(feedbacksPath, 'utf8');
+  return JSON.parse(data || '[]');
+}
+
+// Write feedbacks
+function writeFeedbacks(data) {
+  fs.writeFileSync(feedbacksPath, JSON.stringify(data, null, 2));
+}
+
+// Create new customer public feedback
+function createFeedback(feedbackData) {
+  const list = readFeedbacks();
+  const newId = list.length ? Math.max(...list.map(f => f.id)) + 1 : 1;
+  const record = {
+    id: newId,
+    license_number: feedbackData.license_number,
+    business_name: feedbackData.business_name,
+    rating: feedbackData.rating || 'GOOD',
+    customer_name: feedbackData.customer_name || 'Anonymous Public Citizen',
+    customer_phone: feedbackData.customer_phone || '',
+    comments: feedbackData.comments || '',
+    created_at: new Date().toISOString()
+  };
+  list.push(record);
+  writeFeedbacks(list);
+
+  // Sync to Supabase Cloud PostgreSQL
+  if (supabase) {
+    supabase.from('feedbacks').insert([{
+      license_number: record.license_number,
+      business_name: record.business_name,
+      rating: record.rating,
+      customer_name: record.customer_name,
+      customer_phone: record.customer_phone,
+      comments: record.comments
+    }]).then(({ error }) => {
+      if (error) console.error('[SUPABASE FEEDBACK INSERT WARNING]', error.message);
+      else console.log(`[SUPABASE FEEDBACK CREATED] ${record.business_name} - ${record.rating}`);
+    });
+  }
+
+  return record;
+}
+
+function getFeedbacks() {
+  return readFeedbacks();
+}
+
 
 // Date-only comparison helpers
 function todayStr() {
@@ -253,12 +310,22 @@ function createOfficer(officerData) {
 // --- ADMIN: CREATE NEW ESTABLISHMENT ---
 function createBusiness(businessData) {
   const all = readAll();
+
+  // Check for duplicate / tampered FSSAI license number
+  const cleanLicense = String(businessData.license_number || '').trim().toUpperCase();
+  const duplicate = all.find(b => String(b.license_number || '').trim().toUpperCase() === cleanLicense);
+  if (duplicate) {
+    const err = new Error(`🚨 Tampered FSSAI License Number Error! License "${cleanLicense}" is already registered for "${duplicate.business_name}" in the database.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   const newId = all.length ? Math.max(...all.map(i => i.id)) + 1 : 1;
   const record = {
     id: newId,
     business_name: businessData.business_name,
     ward: businessData.ward,
-    license_number: businessData.license_number,
+    license_number: cleanLicense,
     business_type: businessData.business_type || 'Restaurant / Eatery',
     risk_category: businessData.risk_category || 'MEDIUM',
     hygiene_rating: businessData.hygiene_rating || 'Grade B (Satisfactory)',
@@ -273,8 +340,30 @@ function createBusiness(businessData) {
   };
   all.push(record);
   writeAll(all);
+
+  // Sync to Supabase Cloud PostgreSQL Database
+  if (supabase) {
+    supabase.from('inspections').insert([{
+      business_name: record.business_name,
+      ward: record.ward,
+      license_number: record.license_number,
+      business_type: record.business_type,
+      risk_category: record.risk_category,
+      hygiene_rating: record.hygiene_rating,
+      inspection_date: record.inspection_date,
+      assigned_inspector_name: record.assigned_inspector_name,
+      status: record.status,
+      findings: record.findings,
+      next_due_date: record.next_due_date
+    }]).then(({ error }) => {
+      if (error) console.error('[SUPABASE BUSINESS INSERT WARNING]', error.message);
+      else console.log(`[SUPABASE BUSINESS CREATED] ${record.business_name} (${record.license_number})`);
+    });
+  }
+
   return record;
 }
+
 
 // --- ADMIN: ASSIGN INSPECTION TO INSPECTOR ---
 function assignInspection(licenseNumber, inspectorName, dueDate, notes) {
@@ -712,5 +801,7 @@ module.exports = {
   getHistory,
   dispatchNotice,
   getOverdue,
-  getSummary
+  getSummary,
+  createFeedback,
+  getFeedbacks
 };

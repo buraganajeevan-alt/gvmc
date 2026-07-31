@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "license_number": "AP-FSSAI-2023-3001",
+    "business_name": "Dharani Restaurant - Hotel Dasapalla",
+    "rating": "WORST",
+    "customer_name": "P. Ramesh",
+    "customer_phone": "9849011223",
+    "comments": "Unwashed plates and kitchen grease trap smell near dining area.",
+    "created_at": "2026-07-31T14:30:00.000Z"
+  },
+  {
+    "id": 2,
+    "license_number": "AP-FSSAI-2023-5001",
+    "business_name": "Tycoon Multi Cuisine Restaurant",
+    "rating": "BAD",
+    "customer_name": "S. Anitha",
+    "customer_phone": "9849022334",
+    "comments": "Wait time was long and table hygiene needed improvement.",
+    "created_at": "2026-07-31T15:10:00.000Z"
+  },
+  {
+    "id": 3,
+    "license_number": "AP-FSSAI-2023-1001",
+    "business_name": "Horizon Restaurant - Dolphin Hotel",
+    "rating": "GOOD",
+    "customer_name": "M. Prasad",
+    "customer_phone": "9849033445",
+    "comments": "Food was very fresh and kitchen appeared clean.",
+    "created_at": "2026-07-31T16:00:00.000Z"
+  }
+]
