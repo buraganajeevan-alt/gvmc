@@ -649,7 +649,7 @@ export default function App() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '20px' }}>
-              {/* 1. ADMIN CARD */}
+              {/* 1. ADMIN / SUPERVISOR CARD */}
               <div
                 className="role-selection-card"
                 onClick={() => {
@@ -659,14 +659,14 @@ export default function App() {
                 }}
               >
                 <div className="role-card-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>🔑</div>
-                <h3 className="role-card-title">1. Admin</h3>
-                <p className="role-card-desc">Add Inspectors, Add Establishments &amp; Assign Audits</p>
+                <h3 className="role-card-title">1. Supervisor / Admin</h3>
+                <p className="role-card-desc">Automatic Overdue Alerts &amp; Automated Audit Assignments to replace manual patrol</p>
                 <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Admin Login →
+                  Supervisor Login →
                 </button>
               </div>
 
-              {/* 2. INSPECTOR CARD */}
+              {/* 2. FIELD OFFICER CARD */}
               <div
                 className="role-selection-card"
                 onClick={() => {
@@ -676,10 +676,10 @@ export default function App() {
                 }}
               >
                 <div className="role-card-icon" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#38bdf8' }}>👮</div>
-                <h3 className="role-card-title">2. Field Inspector</h3>
-                <p className="role-card-desc">View Assigned Audits, Log Findings &amp; Record Violations</p>
+                <h3 className="role-card-title">2. GVMC Field Officer</h3>
+                <p className="role-card-desc">Live Ward-Level Data &amp; GPS Turn-by-Turn Route to act before complaints escalate</p>
                 <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Inspector Login →
+                  Field Officer Login →
                 </button>
               </div>
 
@@ -693,13 +693,14 @@ export default function App() {
                 }}
               >
                 <div className="role-card-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>🏛️</div>
-                <h3 className="role-card-title">3. Manager / Comm.</h3>
-                <p className="role-card-desc">Executive Dashboard, Monitor Compliance &amp; High-Risk Radar</p>
+                <h3 className="role-card-title">3. Commissioner Analyst</h3>
+                <p className="role-card-desc">Single Dashboard View Across All Wards to prioritize budget &amp; staff deployment</p>
                 <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Manager Login →
+                  Commissioner Login →
                 </button>
               </div>
             </div>
+
           </div>
 
           <div className="toast-container">
