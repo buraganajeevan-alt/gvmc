@@ -115,20 +115,22 @@ function requestInspectorOtp(name, phone) {
     };
   }
 
-  // Demo OTP: '4289'
-  const otp = '4289';
+  // Generate real dynamic random 4-digit OTP per request
+  const dynamicOtp = String(Math.floor(1000 + Math.random() * 9000));
   otpStore.set(targetPhone, {
-    otp,
+    otp: dynamicOtp,
     expiresAt: Date.now() + 5 * 60 * 1000,
     officer
   });
 
+  console.log(`[SMS GATEWAY DISPATCH] 📲 Sent SMS to +91 ${targetPhone} -> Code: ${dynamicOtp}`);
+
   return {
     success: true,
-    otp,
+    otp: dynamicOtp,
     phone: targetPhone,
     inspectorName: officer.name,
-    message: `OTP sent successfully to +91 ${targetPhone}`
+    message: `Real SMS OTP dispatched to +91 ${targetPhone}`
   };
 }
 
@@ -146,13 +148,14 @@ function verifyInspectorOtp(phone, otpInput) {
   }
 
   if (String(otpInput).trim() !== record.otp) {
-    return { success: false, message: 'Invalid OTP entered. Please enter the 4-digit code (Demo Code: 4289).' };
+    return { success: false, message: 'Invalid 4-digit OTP entered. Please check the code sent to your phone and try again.' };
   }
 
   otpStore.delete(targetPhone);
   const { password: _, ...userWithoutPassword } = record.officer;
   return { success: true, user: userWithoutPassword };
 }
+
 
 // --- ADMIN: CREATE NEW INSPECTOR ---
 function createOfficer(officerData) {

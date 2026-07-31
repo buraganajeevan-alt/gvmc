@@ -88,5 +88,19 @@
       "Ward 5"
     ],
     "phone": "9849012348"
+  },
+  {
+    "id": 7,
+    "name": "pardhu",
+    "emp_id": "GVMC-FASSI-26",
+    "email": "mose@gvmc.com",
+    "password": "officer123",
+    "role": "INSPECTOR",
+    "designation": "FSSAI Inspector",
+    "assigned_wards": [
+      "Ward 1"
+    ],
+    "phone": "9133442231",
+    "created_at": "2026-07-31T14:48:23.756Z"
   }
 ]

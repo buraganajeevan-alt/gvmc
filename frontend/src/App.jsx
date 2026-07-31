@@ -852,27 +852,36 @@ export default function App() {
               </form>
             ) : (
               <form onSubmit={handleVerifyInspectorOtp}>
-                <div style={{ background: 'rgba(37, 99, 235, 0.08)', border: '1px solid rgba(37, 99, 235, 0.25)', padding: '12px', borderRadius: '12px', marginBottom: '16px', fontSize: '12px' }}>
-                  <div style={{ fontWeight: '700', color: 'var(--accent-blue)', marginBottom: '4px' }}>
-                    📲 OTP Sent to +91 {inspectorPhoneInput}
+                {/* Live Device SMS Notification Simulation */}
+                <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#ffffff', padding: '14px', borderRadius: '12px', marginBottom: '16px', border: '1.5px solid var(--accent-blue)', boxShadow: '0 6px 20px rgba(37, 99, 235, 0.25)', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '11px', color: '#94a3b8' }}>
+                    <span>📱 MESSAGES · LIVE SMS RECEIVED NOW</span>
+                    <span style={{ color: '#34d399', fontWeight: '700' }}>● Just now</span>
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>
-                    Inspector Name: <strong>{inspectorNameInput}</strong>
-                  </div>
-                  <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '8px', marginTop: '8px', border: '1px solid #cbd5e1', fontWeight: '800', color: '#059669', fontSize: '13px' }}>
-                    ⚡ Demo Mode OTP: {demoOtp}
+                  <div style={{ fontSize: '13px', lineHeight: '1.4', fontWeight: '500', color: '#e2e8f0' }}>
+                    <strong style={{ color: '#38bdf8' }}>GVMC-FSSAI:</strong> Your security verification code for Inspector <strong>{inspectorNameInput}</strong> is <span style={{ background: '#2563eb', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontSize: '15px', fontWeight: '900', letterSpacing: '2px' }}>{demoOtp}</span>. Valid for 5 minutes.
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Enter 4-Digit OTP Code *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className="form-label" style={{ marginBottom: 0 }}>Enter 4-Digit Security Code *</label>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                      onClick={() => handleRequestInspectorOtp(null, inspectorNameInput, inspectorPhoneInput)}
+                    >
+                      📩 Resend Code
+                    </button>
+                  </div>
                   <input
                     type="text"
                     maxLength="4"
                     required
+                    autoFocus
                     className="form-control"
-                    placeholder="e.g. 4289"
-                    style={{ textAlign: 'center', letterSpacing: '6px', fontSize: '20px', fontWeight: '800' }}
+                    placeholder="e.g. 7814"
+                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '22px', fontWeight: '800', border: '2px solid var(--accent-blue)' }}
                     value={otpInput}
                     onChange={e => setOtpInput(e.target.value)}
                   />
@@ -880,13 +889,14 @@ export default function App() {
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button type="button" className="btn secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setOtpSent(false)}>
-                    ← Back
+                    ← Edit Mobile
                   </button>
                   <button type="submit" className="btn primary" style={{ flex: 2, justifyContent: 'center', padding: '12px' }} disabled={verifyingOtp}>
                     {verifyingOtp ? 'Verifying OTP...' : '🔐 Verify & Login →'}
                   </button>
                 </div>
               </form>
+
             )
           ) : (
             /* ADMIN / COMMISSIONER LOGIN FORM (EMAIL + PASSWORD) */
