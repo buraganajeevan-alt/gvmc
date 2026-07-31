@@ -267,9 +267,50 @@ export default function App() {
     reader.readAsDataURL(file)
   }
 
-  // Inspector Location Modal State
+  // Inspector Location & Live Device GPS State
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [selectedLocationItem, setSelectedLocationItem] = useState(null)
+  const [inspectorCoords, setInspectorCoords] = useState({ lat: 17.7231, lng: 83.3012, address: '17.7231° N, 83.3012° E (GVMC Field Office)' })
+  const [locating, setLocating] = useState(false)
+
+  // Detect Inspector's Exact Device Live GPS Location
+  function getLiveInspectorLocation() {
+    if (!navigator.geolocation) {
+      addToast('Geolocation is not supported by your browser.', 'warning')
+      return
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        setInspectorCoords({
+          lat: latitude,
+          lng: longitude,
+          address: `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E (Exact Live GPS)`
+        })
+        setLocating(false)
+        addToast('Exact live GPS coordinates updated successfully!', 'success')
+      },
+      (err) => {
+        setLocating(false)
+        console.warn('Geolocation error:', err)
+        setInspectorCoords({
+          lat: 17.7231,
+          lng: 83.3012,
+          address: '17.7231° N, 83.3012° E (Siripuram Field HQ, Visakhapatnam)'
+        })
+        addToast('Using Visakhapatnam Field HQ coordinates.', 'info')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  function handleOpenLocationModal(item) {
+    setSelectedLocationItem(item)
+    setShowLocationModal(true)
+    getLiveInspectorLocation()
+  }
+
 
   // Inspector History Filter State
   const [historySearch, setHistorySearch] = useState('')
@@ -1054,9 +1095,10 @@ export default function App() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button className="btn secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '12px', borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)' }} onClick={() => { setSelectedLocationItem(item); setShowLocationModal(true); }}>
-                          🗺️ Location Route
+                        <button className="btn secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '12px', borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)' }} onClick={() => handleOpenLocationModal(item)}>
+                          🗺️ Live GPS Route
                         </button>
+
                         <button className="btn secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }} onClick={() => openHistoryDrawer(item)}>
                           🔍 Details
                         </button>
@@ -2027,78 +2069,100 @@ export default function App() {
       {/* --- GPS LOCATION & ROUTE NAVIGATION MODAL --- */}
       {showLocationModal && selectedLocationItem && (
         <div className="modal-overlay" onClick={() => setShowLocationModal(false)}>
-          <div className="modal-container" style={{ maxWidth: '580px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-container" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="section-header">
-              <div className="section-title">🗺️ Restaurant Location &amp; Route Guidance</div>
+              <div>
+                <div className="section-title">🗺️ Live GPS Navigation &amp; Turn-by-Turn Route</div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Exact device location route to <strong>{selectedLocationItem.business_name}</strong>
+                </p>
+              </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }} onClick={() => setShowLocationModal(false)}>✕</button>
             </div>
 
             {/* Visual GPS Route Card */}
-            <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', padding: '20px', borderRadius: '16px', color: '#ffffff', marginBottom: '18px', border: '1px solid var(--accent-blue)', boxShadow: '0 8px 24px rgba(37, 99, 235, 0.2)' }}>
+            <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', padding: '20px', borderRadius: '16px', color: '#ffffff', marginBottom: '18px', border: '1.5px solid var(--accent-blue)', boxShadow: '0 8px 24px rgba(37, 99, 235, 0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                 <div>
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block' }}>Target Establishment</span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block' }}>Destination Restaurant</span>
                   <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>{selectedLocationItem.business_name}</h3>
                 </div>
-                <span className="mono-tag" style={{ background: 'rgba(37, 99, 235, 0.3)', color: '#60a5fa', border: '1px solid rgba(37, 99, 235, 0.5)' }}>{selectedLocationItem.license_number}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                  <span className="mono-tag" style={{ background: 'rgba(37, 99, 235, 0.3)', color: '#60a5fa', border: '1px solid rgba(37, 99, 235, 0.5)' }}>{selectedLocationItem.license_number}</span>
+                  <span style={{ fontSize: '11px', color: '#34d399', fontWeight: '700' }}>Ward: {selectedLocationItem.ward}</span>
+                </div>
               </div>
 
               {/* Route Details Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12px', marginBottom: '16px' }}>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px' }}>
-                  <span style={{ color: '#94a3b8', display: 'block' }}>📍 Inspector Current Location:</span>
-                  <strong style={{ color: '#38bdf8' }}>GVMC Field HQ, Visakhapatnam</strong>
+                <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ color: '#94a3b8' }}>📍 Your Exact Device Location:</span>
+                    <button
+                      type="button"
+                      style={{ background: 'rgba(56, 189, 248, 0.2)', border: '1px solid #38bdf8', color: '#38bdf8', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+                      onClick={getLiveInspectorLocation}
+                      disabled={locating}
+                    >
+                      {locating ? 'Locating...' : '🔄 Refresh GPS'}
+                    </button>
+                  </div>
+                  <strong style={{ color: '#38bdf8', fontSize: '13px' }}>{inspectorCoords.address}</strong>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px' }}>
-                  <span style={{ color: '#94a3b8', display: 'block' }}>🏁 Restaurant Address:</span>
-                  <strong style={{ color: '#34d399' }}>{selectedLocationItem.address || `${selectedLocationItem.ward}, Visakhapatnam`}</strong>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px' }}>
-                  <span style={{ color: '#94a3b8', display: 'block' }}>🚗 Estimated Travel Distance:</span>
-                  <strong style={{ color: '#fbbf24' }}>1.8 km · 4 mins drive</strong>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px' }}>
-                  <span style={{ color: '#94a3b8', display: 'block' }}>🌐 GPS Coordinates:</span>
-                  <strong style={{ color: '#c084fc' }}>17.7231° N, 83.3012° E</strong>
+
+                <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '4px' }}>🏁 Destination Restaurant Address:</span>
+                  <strong style={{ color: '#34d399', fontSize: '13px' }}>{selectedLocationItem.address || `${selectedLocationItem.ward}, Visakhapatnam`}</strong>
                 </div>
               </div>
 
-              {/* Live Route Graphic Simulator */}
-              <div style={{ background: 'rgba(0,0,0,0.4)', padding: '14px', borderRadius: '12px', textAlign: 'center', border: '1px dashed rgba(59, 130, 246, 0.4)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', fontSize: '13px', fontWeight: '700' }}>
-                  <span>📍 Field HQ</span>
-                  <span style={{ color: '#38bdf8' }}>━━━━━━ 🚗 ━━━━━━▶</span>
-                  <span>🏁 {selectedLocationItem.business_name}</span>
-                </div>
-                <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', display: 'block' }}>
-                  Live GPS Geo-Fence Verified for {user.name}
-                </span>
+              {/* Live Interactive Map Iframe Preview */}
+              <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.4)', height: '200px', marginBottom: '14px', background: '#070a12' }}>
+                <iframe
+                  title="Live GPS Route Map"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  scrolling="no"
+                  marginHeight="0"
+                  marginWidth="0"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${(inspectorCoords.lng || 83.3012) - 0.02}%2C${(inspectorCoords.lat || 17.7231) - 0.02}%2C${(inspectorCoords.lng || 83.3012) + 0.02}%2C${(inspectorCoords.lat || 17.7231) + 0.02}&layer=mapnik&marker=${inspectorCoords.lat || 17.7231}%2C${inspectorCoords.lng || 83.3012}`}
+                  style={{ filter: 'contrast(1.05)' }}
+                />
+              </div>
+
+              {/* Live Route Banner */}
+              <div style={{ background: 'rgba(0,0,0,0.4)', padding: '10px 14px', borderRadius: '10px', textAlign: 'center', border: '1px dashed rgba(59, 130, 246, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                <span>📍 Your GPS Position</span>
+                <span style={{ color: '#38bdf8', fontWeight: '800' }}>━━━━━━ 🚗 Exact Turn-by-Turn Route ━━━━━━▶</span>
+                <span>🏁 {selectedLocationItem.business_name}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocationItem.business_name + ' ' + (selectedLocationItem.address || selectedLocationItem.ward) + ' Visakhapatnam')}`}
+                href={`https://www.google.com/maps/dir/?api=1&origin=${inspectorCoords.lat || 17.7231},${inspectorCoords.lng || 83.3012}&destination=${encodeURIComponent(selectedLocationItem.business_name + ', ' + (selectedLocationItem.address || selectedLocationItem.ward) + ', Visakhapatnam, Andhra Pradesh')}&travelmode=driving`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn secondary"
-                style={{ textDecoration: 'none', borderColor: 'var(--accent-blue)', color: 'var(--accent-blue)' }}
+                className="btn primary"
+                style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '13px', background: 'linear-gradient(135deg, #059669, #047857)', color: '#ffffff' }}
               >
-                📍 Open in Google Maps 🗺️
+                🗺️ Open Turn-by-Turn Route in Google Maps 🚀
               </a>
               <button
-                className="btn primary"
+                className="btn secondary"
                 onClick={() => {
                   setShowLocationModal(false)
                   handleStartInspection(selectedLocationItem)
                 }}
               >
-                ⚡ Start Inspection at this Location
+                ⚡ Start Inspection at this Restaurant
               </button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Toast Notifications */}
       <div className="toast-container">
