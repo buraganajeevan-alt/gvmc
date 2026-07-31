@@ -84,7 +84,9 @@ export default function App() {
   })
 
   // Inspector Phone + Name OTP Authentication State
+  const [loginMode, setLoginMode] = useState('email') // 'email' | 'otp'
   const [inspectorNameInput, setInspectorNameInput] = useState('')
+
   const [inspectorPhoneInput, setInspectorPhoneInput] = useState('')
   const [otpInput, setOtpInput] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -240,8 +242,16 @@ export default function App() {
   function handleLogout() {
     setUser(null)
     localStorage.removeItem('gvmc_user')
+    setLoginEmail('')
+    setLoginPassword('')
+    setInspectorNameInput('')
+    setInspectorPhoneInput('')
+    setOtpInput('')
+    setOtpSent(false)
+    setLoginError('')
     addToast('You have been logged out.', 'info')
   }
+
 
   async function loadAllData() {
     setLoading(true)
@@ -690,227 +700,67 @@ export default function App() {
     addToast('Downloading GVMC Food Safety Audit Report (CSV)...', 'info')
   }
 
-  // --- STAGE 1 & 2: UNAUTHENTICATED HOME PAGE & DEDICATED LOGIN FORMS ---
+  // --- STAGE: SINGLE UNIFIED LOGIN PAGE WITH AUTOMATIC ROLE-BASED ACCESS ---
   if (!user) {
-    // STAGE 1: HOME LANDING PAGE TO SELECT LOGIN TYPE
-    if (selectedRoleType === null) {
-      return (
-        <div className="login-overlay">
-          <div className="login-card" style={{ maxWidth: '680px' }}>
-            <div className="login-header" style={{ textAlign: 'center' }}>
-              <img
-                src="/gvmc_logo.png"
-                alt="GVMC Official Seal"
-                className="gvmc-official-logo"
-                style={{
-                  width: '100px',
-                  height: '100px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  marginBottom: '14px',
-                  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4)',
-                  border: '3px solid var(--accent-cyan)'
-                }}
-              />
-              <h1 className="login-title">GVMC · Food Safety Portal</h1>
-              <p className="login-subtitle">Visakhapatnam Municipal Corporation — Public Health &amp; FSSAI System</p>
-            </div>
-
-
-            <div style={{ margin: '20px 0 10px', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)' }}>Select Portal Login Type</h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>Choose your official role to open the corresponding login screen</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '20px' }}>
-              {/* 1. ADMIN / SUPERVISOR CARD */}
-              <div
-                className="role-selection-card"
-                onClick={() => {
-                  setSelectedRoleType('ADMIN')
-                  setLoginEmail('admin@gvmc.com')
-                  setLoginPassword('')
-                  setLoginError('')
-                }}
-              >
-                <div className="role-card-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>🔑</div>
-                <h3 className="role-card-title">1. Supervisor / Admin</h3>
-                <p className="role-card-desc">Automatic Overdue Alerts &amp; Automated Audit Assignments to replace manual patrol</p>
-                <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Supervisor Login →
-                </button>
-              </div>
-
-              {/* 2. FIELD OFFICER CARD */}
-              <div
-                className="role-selection-card"
-                onClick={() => {
-                  setSelectedRoleType('INSPECTOR')
-                  setInspectorNameInput('')
-                  setInspectorPhoneInput('')
-                  setLoginError('')
-                }}
-              >
-
-                <div className="role-card-icon" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#38bdf8' }}>👮</div>
-                <h3 className="role-card-title">2. GVMC Field Officer</h3>
-                <p className="role-card-desc">Live Ward-Level Data &amp; GPS Turn-by-Turn Route to act before complaints escalate</p>
-                <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Field Officer Login →
-                </button>
-              </div>
-
-              {/* 3. MANAGER / COMMISSIONER CARD */}
-              <div
-                className="role-selection-card"
-                onClick={() => {
-                  setSelectedRoleType('COMMISSIONER')
-                  setLoginEmail('commissioner@gvmc.gov.in')
-                  setLoginPassword('comm123')
-                }}
-              >
-                <div className="role-card-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>🏛️</div>
-                <h3 className="role-card-title">3. Commissioner Analyst</h3>
-                <p className="role-card-desc">Single Dashboard View Across All Wards to prioritize budget &amp; staff deployment</p>
-                <button className="btn primary" style={{ width: '100%', marginTop: '14px', fontSize: '12px', justifyContent: 'center' }}>
-                  Commissioner Login →
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="toast-container">
-            {toasts.map(t => (
-              <div key={t.id} className="toast">
-                <span>ℹ️</span>
-                <span>{t.message}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-
-    // STAGE 2: DEDICATED LOGIN PAGE FOR THE SELECTED ROLE
     return (
       <div className="login-overlay">
-        <div className="login-card" style={{ maxWidth: '440px' }}>
-          <button
-            className="btn secondary"
-            style={{ padding: '4px 10px', fontSize: '12px', marginBottom: '16px' }}
-            onClick={() => setSelectedRoleType(null)}
-          >
-            ← Back to Role Selection
-          </button>
-
-          <div className="login-header">
-            <div className="login-brand-icon">
-              {selectedRoleType === 'ADMIN' ? '🔑' : selectedRoleType === 'COMMISSIONER' ? '🏛️' : '👮'}
-            </div>
-            <h1 className="login-title">
-              {selectedRoleType === 'ADMIN' && 'Admin Portal Login'}
-              {selectedRoleType === 'INSPECTOR' && 'Field Inspector Login'}
-              {selectedRoleType === 'COMMISSIONER' && 'Manager / Commissioner Login'}
-            </h1>
-            <p className="login-subtitle">
-              GVMC Public Health &amp; FSSAI Authentication
-            </p>
+        <div className="login-card" style={{ maxWidth: '480px' }}>
+          <div className="login-header" style={{ textAlign: 'center' }}>
+            <img
+              src="/gvmc_logo.png"
+              alt="GVMC Official Seal"
+              className="gvmc-official-logo"
+              style={{
+                width: '90px',
+                height: '90px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                marginBottom: '12px',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
+                border: '3px solid var(--accent-blue)'
+              }}
+            />
+            <h1 className="login-title">GVMC · Food Safety Portal</h1>
+            <p className="login-subtitle">Visakhapatnam Municipal Corporation — Public Health &amp; FSSAI System</p>
           </div>
 
-          {loginError && <div className="alert error" style={{ fontSize: '13px', marginBottom: '16px', background: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(220, 38, 38, 0.3)' }}>⚠️ {loginError}</div>}
+          {/* Login Method Toggle Pills */}
 
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
+            <button
+              type="button"
+              className={`btn ${loginMode === 'email' ? 'primary' : 'secondary'}`}
+              style={{ flex: 1, justifyContent: 'center', fontSize: '12px', padding: '8px' }}
+              onClick={() => { setLoginMode('email'); setLoginError(''); }}
+            >
+              ✉️ Email &amp; Password
+            </button>
+            <button
+              type="button"
+              className={`btn ${loginMode === 'otp' ? 'primary' : 'secondary'}`}
+              style={{ flex: 1, justifyContent: 'center', fontSize: '12px', padding: '8px' }}
+              onClick={() => { setLoginMode('otp'); setLoginError(''); }}
+            >
+              📲 Mobile OTP Login
+            </button>
+          </div>
 
-          {/* INSPECTOR LOGIN FORM (NAME + PHONE NUMBER + OTP) */}
-          {selectedRoleType === 'INSPECTOR' ? (
-            !otpSent ? (
-              <form onSubmit={handleRequestInspectorOtp}>
-                <div className="form-group">
-                  <label className="form-label">Inspector Full Name (As Registered by Admin) *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    placeholder="e.g. Ravi Kumar"
-                    value={inspectorNameInput}
-                    onChange={e => setInspectorNameInput(e.target.value)}
-                  />
-                </div>
+          {loginError && (
+            <div className="alert error" style={{ fontSize: '13px', marginBottom: '16px', background: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(220, 38, 38, 0.3)' }}>
+              ⚠️ {loginError}
+            </div>
+          )}
 
-                <div className="form-group">
-                  <label className="form-label">Mobile Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    className="form-control"
-                    placeholder="e.g. 9849012345"
-                    value={inspectorPhoneInput}
-                    onChange={e => setInspectorPhoneInput(e.target.value)}
-                  />
-                </div>
-
-                <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={requestingOtp}>
-                  {requestingOtp ? 'Verifying Details...' : '📲 Request OTP →'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyInspectorOtp}>
-                {/* Live Device SMS Notification Simulation */}
-                <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#ffffff', padding: '14px', borderRadius: '12px', marginBottom: '16px', border: '1.5px solid var(--accent-blue)', boxShadow: '0 6px 20px rgba(37, 99, 235, 0.25)', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '11px', color: '#94a3b8' }}>
-                    <span>📱 MESSAGES · LIVE SMS RECEIVED NOW</span>
-                    <span style={{ color: '#34d399', fontWeight: '700' }}>● Just now</span>
-                  </div>
-                  <div style={{ fontSize: '13px', lineHeight: '1.4', fontWeight: '500', color: '#e2e8f0' }}>
-                    <strong style={{ color: '#38bdf8' }}>GVMC-FSSAI:</strong> Your security verification code for Inspector <strong>{inspectorNameInput}</strong> is <span style={{ background: '#2563eb', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontSize: '15px', fontWeight: '900', letterSpacing: '2px' }}>{demoOtp}</span>. Valid for 5 minutes.
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label className="form-label" style={{ marginBottom: 0 }}>Enter 4-Digit Security Code *</label>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
-                      onClick={() => handleRequestInspectorOtp(null, inspectorNameInput, inspectorPhoneInput)}
-                    >
-                      📩 Resend Code
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    maxLength="4"
-                    required
-                    autoFocus
-                    className="form-control"
-                    placeholder="e.g. 7814"
-                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '22px', fontWeight: '800', border: '2px solid var(--accent-blue)' }}
-                    value={otpInput}
-                    onChange={e => setOtpInput(e.target.value)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" className="btn secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setOtpSent(false)}>
-                    ← Edit Mobile
-                  </button>
-                  <button type="submit" className="btn primary" style={{ flex: 2, justifyContent: 'center', padding: '12px' }} disabled={verifyingOtp}>
-                    {verifyingOtp ? 'Verifying OTP...' : '🔐 Verify & Login →'}
-                  </button>
-                </div>
-              </form>
-
-            )
-          ) : (
-            /* ADMIN / COMMISSIONER LOGIN FORM (EMAIL + PASSWORD) */
+          {/* MODE A: EMAIL & PASSWORD (AUTO-DETECTS ROLE FOR ADMIN, COMMISSIONER, & INSPECTOR) */}
+          {loginMode === 'email' ? (
             <form onSubmit={e => handleLogin(e)}>
               <div className="form-group">
-                <label className="form-label">Email Address *</label>
+                <label className="form-label">Official Registered Email Address *</label>
                 <input
                   type="email"
                   required
                   className="form-control"
-                  placeholder="email@gvmc.gov.in"
+                  placeholder="e.g. admin@gvmc.com or rkumar@gvmc.gov.in"
                   value={loginEmail}
                   onChange={e => setLoginEmail(e.target.value)}
                 />
@@ -929,31 +779,78 @@ export default function App() {
               </div>
 
               <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={loggingIn}>
-                {loggingIn ? 'Authenticating...' : `Sign In to ${selectedRoleType} Workspace`}
+                {loggingIn ? 'Authenticating Role...' : '🔐 Sign In to Workspace →'}
               </button>
             </form>
-          )}
+          ) : (
+            /* MODE B: MOBILE PHONE & OTP (FOR FIELD INSPECTORS) */
+            !otpSent ? (
+              <form onSubmit={handleRequestInspectorOtp}>
+                <div className="form-group">
+                  <label className="form-label">Inspector Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className="form-control"
+                    placeholder="e.g. Ravi Kumar"
+                    value={inspectorNameInput}
+                    onChange={e => setInspectorNameInput(e.target.value)}
+                  />
+                </div>
 
-          {/* Quick Demo Credentials Pill (Only shown for Commissioner Analyst) */}
-          {selectedRoleType === 'COMMISSIONER' && (
-            <div style={{ marginTop: '20px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                ⚡ 1-Click Quick Demo Access:
-              </div>
-              <button
-                className="demo-btn"
-                style={{ width: '100%', fontSize: '12px' }}
-                onClick={() => handleLogin(null, { email: 'commissioner@gvmc.gov.in', password: 'comm123' })}
-              >
-                <span>🏛️ 1-Click Manager / Commissioner Login</span>
-                <span className="mono-tag">commissioner@gvmc.gov.in</span>
-              </button>
-            </div>
-          )}
+                <div className="form-group">
+                  <label className="form-label">Registered Mobile Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    className="form-control"
+                    placeholder="e.g. 9849012345"
+                    value={inspectorPhoneInput}
+                    onChange={e => setInspectorPhoneInput(e.target.value)}
+                  />
+                </div>
 
+                <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px' }} disabled={requestingOtp}>
+                  {requestingOtp ? 'Verifying Phone Record...' : '📲 Send OTP →'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyInspectorOtp}>
+                {/* Live Device SMS Banner */}
+                <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#ffffff', padding: '12px', borderRadius: '10px', marginBottom: '14px', border: '1.5px solid var(--accent-blue)' }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>📱 LIVE SMS RECEIVED ON +91 {inspectorPhoneInput}</div>
+                  <div style={{ fontSize: '13px', color: '#e2e8f0' }}>
+                    GVMC Code for <strong>{inspectorNameInput}</strong>: <span style={{ background: '#2563eb', color: '#ffffff', padding: '2px 8px', borderRadius: '6px', fontWeight: '800' }}>{demoOtp}</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Enter 4-Digit Security Code *</label>
+                  <input
+                    type="text"
+                    maxLength="4"
+                    required
+                    autoFocus
+                    className="form-control"
+                    placeholder="e.g. 7814"
+                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '20px', fontWeight: '800' }}
+                    value={otpInput}
+                    onChange={e => setOtpInput(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setOtpSent(false)}>
+                    ← Edit
+                  </button>
+                  <button type="submit" className="btn primary" style={{ flex: 2, justifyContent: 'center', padding: '12px' }} disabled={verifyingOtp}>
+                    {verifyingOtp ? 'Verifying...' : '🔐 Verify & Login →'}
+                  </button>
+                </div>
+              </form>
+            )
+          )}
         </div>
-
-
 
         <div className="toast-container">
           {toasts.map(t => (
@@ -1895,22 +1792,26 @@ export default function App() {
 
             <form onSubmit={handleAddOfficerSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
               <div>
-                <label className="form-label">Full Inspector Name * (Used for OTP Login)</label>
+                <label className="form-label">Full Inspector Name *</label>
                 <input type="text" required placeholder="e.g. M. Verma" className="search-input" style={{ width: '100%' }} value={officerForm.name} onChange={e => setOfficerForm({ ...officerForm, name: e.target.value })} />
               </div>
               <div>
-                <label className="form-label">Mobile Phone Number * (Used for OTP Login)</label>
+                <label className="form-label">Mobile Phone Number *</label>
                 <input type="tel" required placeholder="e.g. 9849012349" className="search-input" style={{ width: '100%' }} value={officerForm.phone} onChange={e => setOfficerForm({ ...officerForm, phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="form-label">Official Email * (For Email Login)</label>
+                <input type="email" required placeholder="mverma@gvmc.gov.in" className="search-input" style={{ width: '100%' }} value={officerForm.email} onChange={e => setOfficerForm({ ...officerForm, email: e.target.value })} />
+              </div>
+              <div>
+                <label className="form-label">Set Inspector Password * (For Login)</label>
+                <input type="password" required placeholder="Set password e.g. officer123" className="search-input" style={{ width: '100%' }} value={officerForm.password} onChange={e => setOfficerForm({ ...officerForm, password: e.target.value })} />
               </div>
               <div>
                 <label className="form-label">Employee Badge ID</label>
                 <input type="text" placeholder="e.g. GVMC-FSSAI-120" className="search-input" style={{ width: '100%' }} value={officerForm.emp_id} onChange={e => setOfficerForm({ ...officerForm, emp_id: e.target.value })} />
               </div>
               <div>
-                <label className="form-label">Official Email</label>
-                <input type="email" placeholder="mverma@gvmc.gov.in" className="search-input" style={{ width: '100%' }} value={officerForm.email} onChange={e => setOfficerForm({ ...officerForm, email: e.target.value })} />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
                 <label className="form-label">Assigned Municipal Ward</label>
                 <select className="select-filter" style={{ width: '100%' }} value={officerForm.assigned_wards} onChange={e => setOfficerForm({ ...officerForm, assigned_wards: e.target.value })}>
                   <option value="Ward 1">Ward 1 (Siripuram)</option>
@@ -1920,6 +1821,7 @@ export default function App() {
                   <option value="Ward 5">Ward 5 (Jagadamba)</option>
                 </select>
               </div>
+
 
               <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button type="button" className="btn secondary" onClick={() => setShowAddOfficerModal(false)}>Cancel</button>

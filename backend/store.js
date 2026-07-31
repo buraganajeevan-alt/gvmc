@@ -1,9 +1,18 @@
 const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const dbPath = path.join(__dirname, 'inspections.json');
 const officersPath = path.join(__dirname, 'officers.json');
 const violationsPath = path.join(__dirname, 'violations.json');
+
+// --- SUPABASE CLOUD DATABASE CLIENT ---
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://befxkspkbyzftxmehfyj.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlZnhrc3BrYnl6ZnR4bWVoZnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTA5MDAsImV4cCI6MjEwMTA4NjkwMH0.qMtaw1yPJ1yAx74VcIbRn-qrAJR0bqW0KPanPELdR_E';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+console.log('⚡ Connected to Supabase Cloud Database:', SUPABASE_URL);
 
 // Initialize database files if they don't exist
 function initDB() {
@@ -17,6 +26,7 @@ function initDB() {
     fs.writeFileSync(violationsPath, JSON.stringify([], null, 2));
   }
 }
+
 
 // Read inspection events
 function readAll() {
@@ -217,8 +227,27 @@ function createOfficer(officerData) {
   };
   officers.push(newOfficer);
   writeOfficers(officers);
+
+  // Sync to Supabase Cloud PostgreSQL Database
+  if (supabase) {
+    supabase.from('officers').insert([{
+      name: newOfficer.name,
+      emp_id: newOfficer.emp_id,
+      email: newOfficer.email,
+      password: newOfficer.password,
+      role: newOfficer.role,
+      designation: newOfficer.designation,
+      assigned_wards: newOfficer.assigned_wards,
+      phone: newOfficer.phone
+    }]).then(({ error }) => {
+      if (error) console.error('[SUPABASE OFFICER INSERT WARNING]', error.message);
+      else console.log(`[SUPABASE OFFICER CREATED] ${newOfficer.name} (${newOfficer.email}) with Password`);
+    });
+  }
+
   return newOfficer;
 }
+
 
 
 // --- ADMIN: CREATE NEW ESTABLISHMENT ---
