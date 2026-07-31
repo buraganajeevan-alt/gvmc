@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "license_number": "AP-FSSAI-2023-1001",
+    "violation_type": "Cleanliness",
+    "severity": "MAJOR",
+    "remarks": "Commercial kitchen audit in progress. Oil sample sent for lab test.",
+    "inspector_name": "Ravi Kumar",
+    "recorded_at": "2026-07-31T13:17:08.275Z"
+  },
+  {
+    "id": 2,
+    "license_number": "AP-FSSAI-2023-1003",
+    "violation_type": "Cleanliness",
+    "severity": "MAJOR",
+    "remarks": "Mandatory 6-month high risk audit assigned.",
+    "inspector_name": "Ravi Kumar",
+    "recorded_at": "2026-07-31T13:18:25.485Z"
+  },
+  {
+    "id": 3,
+    "license_number": "AP-FSSAI-2023-2001",
+    "violation_type": "Storage",
+    "severity": "MAJOR",
+    "remarks": "Annual routine hygiene check.",
+    "inspector_name": "Ravi Kumar",
+    "recorded_at": "2026-07-31T13:26:57.856Z"
+  }
+]

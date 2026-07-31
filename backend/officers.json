@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "GVMC Admin Officer",
+    "emp_id": "GVMC-ADM-001",
+    "email": "admin@gvmc.gov.in",
+    "password": "admin123",
+    "role": "ADMIN",
+    "designation": "GVMC System Administrator",
+    "assigned_wards": [
+      "Ward 1",
+      "Ward 2",
+      "Ward 3",
+      "Ward 4",
+      "Ward 5"
+    ],
+    "phone": "+91 891 2749999"
+  },
+  {
+    "id": 2,
+    "name": "Dr. P. Sharma",
+    "emp_id": "GVMC-COMM-001",
+    "email": "commissioner@gvmc.gov.in",
+    "password": "comm123",
+    "role": "COMMISSIONER",
+    "designation": "Public Health Commissioner / Manager",
+    "assigned_wards": [
+      "Ward 1",
+      "Ward 2",
+      "Ward 3",
+      "Ward 4",
+      "Ward 5"
+    ],
+    "phone": "+91 891 2748888"
+  },
+  {
+    "id": 3,
+    "name": "Ravi Kumar",
+    "emp_id": "GVMC-FSSAI-088",
+    "email": "rkumar@gvmc.gov.in",
+    "password": "officer123",
+    "role": "INSPECTOR",
+    "designation": "Senior FSSAI Inspector",
+    "assigned_wards": [
+      "Ward 1",
+      "Ward 2"
+    ],
+    "phone": "+91 98480 11223"
+  },
+  {
+    "id": 4,
+    "name": "Suresh Rao",
+    "emp_id": "GVMC-FSSAI-104",
+    "email": "srao@gvmc.gov.in",
+    "password": "officer123",
+    "role": "INSPECTOR",
+    "designation": "FSSAI Field Inspector",
+    "assigned_wards": [
+      "Ward 1",
+      "Ward 3"
+    ],
+    "phone": "+91 98480 33445"
+  },
+  {
+    "id": 5,
+    "name": "K. Naidu",
+    "emp_id": "GVMC-FSSAI-112",
+    "email": "knaidu@gvmc.gov.in",
+    "password": "officer123",
+    "role": "INSPECTOR",
+    "designation": "FSSAI Field Inspector",
+    "assigned_wards": [
+      "Ward 2",
+      "Ward 5"
+    ],
+    "phone": "+91 98480 55667"
+  },
+  {
+    "id": 6,
+    "name": "Anitha Roy",
+    "emp_id": "GVMC-FSSAI-118",
+    "email": "aroy@gvmc.gov.in",
+    "password": "officer123",
+    "role": "INSPECTOR",
+    "designation": "FSSAI Field Inspector",
+    "assigned_wards": [
+      "Ward 4",
+      "Ward 5"
+    ],
+    "phone": "+91 98480 77889"
+  }
+]
