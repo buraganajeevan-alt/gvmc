@@ -3,8 +3,8 @@
     "id": 1,
     "name": "GVMC Admin Officer",
     "emp_id": "GVMC-ADM-001",
-    "email": "admin@gvmc.gov.in",
-    "password": "admin123",
+    "email": "admin@gvmc.com",
+    "password": "admin@123",
     "role": "ADMIN",
     "designation": "GVMC System Administrator",
     "assigned_wards": [

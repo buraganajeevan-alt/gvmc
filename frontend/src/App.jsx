@@ -728,8 +728,9 @@ export default function App() {
                 className="role-selection-card"
                 onClick={() => {
                   setSelectedRoleType('ADMIN')
-                  setLoginEmail('admin@gvmc.gov.in')
-                  setLoginPassword('admin123')
+                  setLoginEmail('admin@gvmc.com')
+                  setLoginPassword('')
+                  setLoginError('')
                 }}
               >
                 <div className="role-card-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>🔑</div>
@@ -745,10 +746,12 @@ export default function App() {
                 className="role-selection-card"
                 onClick={() => {
                   setSelectedRoleType('INSPECTOR')
-                  setLoginEmail('rkumar@gvmc.gov.in')
-                  setLoginPassword('officer123')
+                  setInspectorNameInput('')
+                  setInspectorPhoneInput('')
+                  setLoginError('')
                 }}
               >
+
                 <div className="role-card-icon" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#38bdf8' }}>👮</div>
                 <h3 className="role-card-title">2. GVMC Field Officer</h3>
                 <p className="role-card-desc">Live Ward-Level Data &amp; GPS Turn-by-Turn Route to act before complaints escalate</p>
@@ -931,60 +934,12 @@ export default function App() {
             </form>
           )}
 
-          {/* Quick Demo Credentials Pill */}
-          <div style={{ marginTop: '20px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-              ⚡ 1-Click Quick Demo Access:
-            </div>
-            {selectedRoleType === 'ADMIN' && (
-              <button
-                className="demo-btn"
-                style={{ width: '100%', fontSize: '12px' }}
-                onClick={() => handleLogin(null, { email: 'admin@gvmc.gov.in', password: 'admin123' })}
-              >
-                <span>🔑 1-Click Quick Admin Login</span>
-                <span className="mono-tag">admin@gvmc.gov.in</span>
-              </button>
-            )}
-
-            {selectedRoleType === 'INSPECTOR' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <button
-                  className="demo-btn"
-                  style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleRequestInspectorOtp(null, 'Ravi Kumar', '9849012345')}
-                >
-                  <span>👮 1. Ravi Kumar (9849012345)</span>
-                  <span className="mono-tag">Wards 1 &amp; 2</span>
-                </button>
-                <button
-                  className="demo-btn"
-                  style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleRequestInspectorOtp(null, 'Suresh Rao', '9849012346')}
-                >
-                  <span>👮 2. Suresh Rao (9849012346)</span>
-                  <span className="mono-tag">Wards 1 &amp; 3</span>
-                </button>
-                <button
-                  className="demo-btn"
-                  style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleRequestInspectorOtp(null, 'K. Naidu', '9849012347')}
-                >
-                  <span>👮 3. K. Naidu (9849012347)</span>
-                  <span className="mono-tag">Wards 2 &amp; 5</span>
-                </button>
-                <button
-                  className="demo-btn"
-                  style={{ width: '100%', fontSize: '12px' }}
-                  onClick={() => handleRequestInspectorOtp(null, 'Anitha Roy', '9849012348')}
-                >
-                  <span>👮 4. Anitha Roy (9849012348)</span>
-                  <span className="mono-tag">Wards 4 &amp; 5</span>
-                </button>
+          {/* Quick Demo Credentials Pill (Only shown for Commissioner Analyst) */}
+          {selectedRoleType === 'COMMISSIONER' && (
+            <div style={{ marginTop: '20px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                ⚡ 1-Click Quick Demo Access:
               </div>
-            )}
-
-            {selectedRoleType === 'COMMISSIONER' && (
               <button
                 className="demo-btn"
                 style={{ width: '100%', fontSize: '12px' }}
@@ -993,8 +948,9 @@ export default function App() {
                 <span>🏛️ 1-Click Manager / Commissioner Login</span>
                 <span className="mono-tag">commissioner@gvmc.gov.in</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
+
         </div>
 
 
